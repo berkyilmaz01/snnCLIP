@@ -23,8 +23,8 @@ from data.ncaltech101_dataset import NCaltech101Dataset
 # print(f"VClass label: {label} ({dataset.classes[label]})")
 
 # Paths
-dataset_path = ""
-image_path = ""
+dataset_path = "C:/Users/berky/PycharmProjects/ssn-spikeCLIP/datasets/N-Caltech101/Caltech101/Caltech101"
+image_path = "C:/Users/berky/PycharmProjects/ssn-spikeCLIP/datasets/101_ObjectCategories/101_ObjectCategories"
 
 # Test WITHOUT images first
 print("\n--- Test 1: Event data only ---")
