@@ -155,7 +155,7 @@ def events_to_voxel_grid(events: np.ndarray,
         t_idx = t_norm.astype(np.int32)
 
         # Create an empty voxel
-        voxel = np.zeros((num_bins, height, width), dtype=torch.float32)
+        voxel = np.zeros((num_bins, height, width), dtype=np.float32)
 
         # Clip the coordinates into valid range
         # Prevents the out-of-bounds errors
@@ -178,10 +178,7 @@ def events_to_voxel_grid(events: np.ndarray,
             if max_val > 0:
                 voxel = voxel / max_val
 
-        # Conver to PyTorch tensor
-        voxel_tensor = torch.from_numpy(voxel)
-
-        return voxel_tensor
+        return voxel
 
 
 
