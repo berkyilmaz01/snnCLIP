@@ -76,3 +76,5 @@ htmlcov/
 # Other
 .env
 .cache/
+
+# test files
