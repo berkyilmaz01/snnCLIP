@@ -15,7 +15,6 @@ PROJECT_ROOT = "C:/Users/berky/PycharmProjects/ssn-spikeCLIP"
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "spikeclip_snn"))
 
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -31,7 +30,7 @@ from configs.stage2_config import (
     BATCH_SIZE, LEARNING_RATE, NUM_EPOCHS, TEMPERATURE, DEVICE, DEGRADATION_LEVEL,HQ_DATASET_DIR
 )
 from data.ncaltech101_dataset import NCaltech101Dataset
-from data.hq_lq_dataset_e2vid import HQLQDatasetE2VID
+from spikeclip_snn.data.hq_lq_dataset_postprocess import HQLQDatasetPostProcess
 from models.snn_model import SNNReconstruction
 from models.prompt_learner import PromptCLIP
 from losses.prompt_loss import PromptLoss, compute_accuracy
@@ -86,8 +85,7 @@ def main():
 
     # Create HQ/LQ Dataset
     print("\n[4/6] Creating HQ/LQ dataset...")
-    hqlq_dataset = HQLQDatasetE2VID(
-        hq_dir=HQ_DATASET_DIR,
+    hqlq_dataset = HQLQDatasetPostProcess(
         snn_model=snn_model,
         event_dataset=event_dataset,
         device=DEVICE,

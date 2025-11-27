@@ -7,8 +7,8 @@ import torch
 
 EVENT_PATH = "C:/Users/berky/PycharmProjects/ssn-spikeCLIP/datasets/N-Caltech101/Caltech101/Caltech101"
 IMAGE_PATH = "C:/Users/berky/PycharmProjects/ssn-spikeCLIP/datasets/101_ObjectCategories/101_ObjectCategories"
-STAGE1_CHECKPOINT = "spikeclip_snn/checkpoints/spikeclip_best.pth"
-STAGE2_CHECKPOINT_DIR = "spikeclip_snn/checkpoints/stage2"
+STAGE1_CHECKPOINT = "C:/Users/berky/PycharmProjects/ssn-spikeCLIP/spikeclip_snn/checkpoints/spikeclip_best.pth"
+STAGE2_CHECKPOINT_DIR = "C:/Users/berky/PycharmProjects/ssn-spikeCLIP/spikeclip_snn/checkpoints/stage2/prompt_best.pth"
 
 
 # Model Settings
@@ -31,7 +31,7 @@ NUM_EPOCHS = 50
 TEMPERATURE = 0.07
 
 # DEGRADATION_LEVEL
-DEGRADATION_LEVEL = "heavy"
+DEGRADATION_LEVEL = "match_snn"
 
 # Check device
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
