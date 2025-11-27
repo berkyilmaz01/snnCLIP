@@ -9,6 +9,8 @@ import torch
 import torch.nn as nn
 import snntorch as snn
 
+from snntorch import surrogate
+
 # SNNRenstruction is the main neural network that
 # converts event to images
 
@@ -34,29 +36,33 @@ class SNNReconstruction(nn.Module):
         # ENCODER LAYER
         # SNN with LIF neurons
 
+        # Steeper surroagate gradient for better gradient flow
+        spike_grad = surrogate.fast_sigmoid(slope=50)
+        # ENCODER LAYER
+
         #   Layer 1, 5 channels to 32
-        self.conv1 = nn.Conv2d(num_bins, 32, kernel_size=3, stride=2, padding=1)
-        self.lif1 = snn.Leaky(beta=beta)
+        self.conv1 = nn.Conv2d(num_bins, 64, kernel_size=3, stride=2, padding=1)
+        self.lif1 = snn.Leaky(beta=beta, spike_grad=spike_grad)
 
         #   Layer 2, 32 channels to 64
-        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1)
-        self.lif2 = snn.Leaky(beta=beta)
+        self.conv2 = nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1)
+        self.lif2 = snn.Leaky(beta=beta, spike_grad=spike_grad)
 
         #   Layer3, 64 channels to 128
-        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1)
-        self.lif3 = snn.Leaky(beta=beta)
+        self.conv3 = nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1)
+        self.lif3 = snn.Leaky(beta=beta, spike_grad=spike_grad)
 
         # DECODER LAYER
         #   Layer 4, 128 channels to 64
-        self.deconv1 = nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1)
+        self.deconv1 = nn.ConvTranspose2d(256, 128, kernel_size=4, stride=2, padding=1)
         self.relu1 = nn.ReLU()
 
         #   Layer 5, 64 channels to 32
-        self.deconv2 = nn.ConvTranspose2d(64, 32, kernel_size=4, stride=2, padding=1)
+        self.deconv2 = nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1)
         self.relu2 = nn.ReLU()
 
         #   Layer 6, 32 channels to the final image
-        self.deconv3 = nn.ConvTranspose2d(32, 1, kernel_size=4, stride=2, padding=1)
+        self.deconv3 = nn.ConvTranspose2d(64, 1, kernel_size=4, stride=2, padding=1)
         self.sigmoid = nn.Sigmoid()
 
 
@@ -67,12 +73,12 @@ class SNNReconstruction(nn.Module):
         mem2 = self.lif2.init_leaky()
         mem3 = self.lif3.init_leaky()
 
+        # Record the membrane potentials
+        spk_rec = []
+
         # Encoder
         # Process voxel through SNN layer
         # Process over multiple timesteps
-
-        # Record the spikes from final layer
-        spk_rec = []
 
         for step in range(num_steps):
             # Layer 1, Conv + LIF

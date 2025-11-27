@@ -1,6 +1,6 @@
 # Deep Learning Framework
-torch>=2.0.0
-torchvision>=0.15.0
+#torch>=2.0.0
+#torchvision>=0.15.0
 
 # Spiking Neural Networks
 snntorch>=0.7.0
