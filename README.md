@@ -2,6 +2,11 @@
 
 Implementation of **SNN-CLIP: Event-Based Image Reconstruction via Spiking Neural Networks with CLIP Guidance** (arXiv:2501.04477).
 
+implemented SpikeCLIP, a three-stage pipeline for event camera image reconstruction:
+Stage 1: Trained a Spiking Neural Network using contrastive learning with CLIP, achieving 9.80 dB PSNR on N-Caltech101.
+Stage 2: Learned quality-aware prompts using CoOp-style prompt learning, achieving 100% accuracy in distinguishing high-quality from low-quality reconstructions.
+Stage 3: Applied quality-guided fine-tuning, improving PSNR by +2.14 dB. However, we observed that directly optimizing for CLIP similarity can introduce artifacts, requiring regularization techniques like Total Variation loss.
+
 <img width="2985" height="1431" alt="stage1_vs_stage3_comparison" src="https://github.com/user-attachments/assets/dad96311-1639-46e3-b1f4-c086c3a2ac39" />
 
 This repository contains a three-stage training pipeline for high-quality image reconstruction from event camera data using Spiking Neural Networks (SNNs) and CLIP semantic guidance.
