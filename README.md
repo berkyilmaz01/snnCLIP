@@ -220,3 +220,10 @@ This project is licensed under the MIT License.
 - OpenAI CLIP: https://github.com/openai/CLIP
 - CoOp: https://github.com/KaiyangZhou/CoOp
 - SpikeCLIP Paper: https://arxiv.org/abs/2501.04477
+
+## Summary
+implemented SpikeCLIP, a three-stage pipeline for event camera image reconstruction:
+Stage 1: Trained a Spiking Neural Network using contrastive learning with CLIP, achieving 9.80 dB PSNR on N-Caltech101.
+Stage 2: Learned quality-aware prompts using CoOp-style prompt learning, achieving 100% accuracy in distinguishing high-quality from low-quality reconstructions.
+Stage 3: Applied quality-guided fine-tuning, improving PSNR by +2.14 dB. However, we observed that directly optimizing for CLIP similarity can introduce artifacts, requiring regularization techniques like Total Variation loss.
+
