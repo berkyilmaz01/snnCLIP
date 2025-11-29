@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader, random_split
 from configs.stage3_config import (
     EVENT_PATH, IMAGE_PATH, STAGE1_CHECKPOINT, STAGE2_CHECKPOINT, STAGE3_CHECKPOINT_DIR,
     NUM_BINS, BETA, NUM_STEPS, N_CTX,
-    LAMBDA_QUALITY, LAMBDA_RECON, LAMBDA_INFONCE,
+    LAMBDA_QUALITY, LAMBDA_RECON, LAMBDA_TV, LAMBDA_INFONCE, USE_EVENT_WEIGHTING,
     BATCH_SIZE, LEARNING_RATE, NUM_EPOCHS, TEMPERATURE, DEVICE
 )
 from data.ncaltech101_dataset import NCaltech101Dataset
@@ -50,7 +50,8 @@ def main():
     print("SpikeCLIP Stage 3: Quality-Guided SNN Fine-tuning")
     print("=" * 60)
     print(f"Device: {DEVICE}")
-    print(f"Loss weights: quality={LAMBDA_QUALITY}, recon={LAMBDA_RECON}, infonce={LAMBDA_INFONCE}")
+    print(f"Loss weights: quality={LAMBDA_QUALITY}, recon={LAMBDA_RECON}, tv={LAMBDA_TV}, infonce={LAMBDA_INFONCE}")
+    print(f"Event-aware weighting: {USE_EVENT_WEIGHTING}")
 
     # Load CLIP model
     print("\n[1/6] Loading CLIP model...")
@@ -111,13 +112,15 @@ def main():
 
     print(f"    Train: {len(train_dataset)} | Val: {len(val_dataset)}")
 
-    # Setup Traning
+    # Setup Training
     # Loss
     criterion = CombinedStage3Loss(
         lambda_quality=LAMBDA_QUALITY,
         lambda_recon=LAMBDA_RECON,
+        lambda_tv=LAMBDA_TV,
         lambda_infonce=LAMBDA_INFONCE,
-        temperature=TEMPERATURE
+        temperature=TEMPERATURE,
+        use_event_weighting=USE_EVENT_WEIGHTING
     )
 
     # Optimizer (only SNN parameters)
@@ -168,7 +171,8 @@ def main():
                 snn_output, gt_images,
                 image_features.float(),
                 text_features_hq,
-                text_features_lq
+                text_features_lq,
+                event_voxel=voxels  # Pass voxels for event-aware weighting
             )
 
             # Backward
@@ -185,8 +189,8 @@ def main():
             # Print progress
             if (batch_idx + 1) % 50 == 0:
                 print(f"Epoch [{epoch+1}/{NUM_EPOCHS}] Batch [{batch_idx+1}/{len(train_loader)}] "
-                      f"Loss: {loss.item():.4f} (Q:{loss_dict['quality']:.3f} R:{loss_dict['recon']:.3f}) "
-                      f"PSNR: {batch_psnr:.2f}")
+                      f"Loss: {loss.item():.4f} (Q:{loss_dict['quality']:.3f} R:{loss_dict['recon']:.3f} "
+                      f"TV:{loss_dict.get('tv', 0):.3f}) PSNR: {batch_psnr:.2f}")
 
         avg_train_loss = epoch_loss / len(train_loader)
         avg_train_psnr = epoch_psnr / len(train_loader)
