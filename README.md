@@ -1,4 +1,4 @@
-# SpikeCLIP: Event-Based Image Reconstruction with CLIP Guidance
+# SNN-CLIP: Event-Based Image Reconstruction with CLIP Guidance
 
 Implementation of **SNN-CLIP: Event-Based Image Reconstruction via Spiking Neural Networks with CLIP Guidance** (arXiv:2501.04477).
 
