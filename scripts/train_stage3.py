@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader, random_split
 from configs.stage3_config import (
     EVENT_PATH, IMAGE_PATH, STAGE1_CHECKPOINT, STAGE2_CHECKPOINT, STAGE3_CHECKPOINT_DIR,
     NUM_BINS, BETA, NUM_STEPS, N_CTX,
-    LAMBDA_QUALITY, LAMBDA_RECON, LAMBDA_TV, LAMBDA_INFONCE, USE_EVENT_WEIGHTING,
+    LAMBDA_PROMPT,
     BATCH_SIZE, LEARNING_RATE, NUM_EPOCHS, TEMPERATURE, DEVICE
 )
 from data.ncaltech101_dataset import NCaltech101Dataset
@@ -50,8 +50,7 @@ def main():
     print("SpikeCLIP Stage 3: Quality-Guided SNN Fine-tuning")
     print("=" * 60)
     print(f"Device: {DEVICE}")
-    print(f"Loss weights: quality={LAMBDA_QUALITY}, recon={LAMBDA_RECON}, tv={LAMBDA_TV}, infonce={LAMBDA_INFONCE}")
-    print(f"Event-aware weighting: {USE_EVENT_WEIGHTING}")
+    print(f"Loss formulation: L_total = L_class + {LAMBDA_PROMPT} * L_prompt (Paper Eq. 11)")
 
     # Load CLIP model
     print("\n[1/6] Loading CLIP model...")
@@ -101,6 +100,10 @@ def main():
         num_bins=NUM_BINS,
         image_dir=IMAGE_PATH
     )
+    
+    # Get class names for generating class text features
+    class_names = dataset.classes
+    print(f"    Found {len(dataset)} samples across {len(class_names)} classes")
 
     # Train/Val split
     train_size = int(0.8 * len(dataset))
@@ -113,14 +116,10 @@ def main():
     print(f"    Train: {len(train_dataset)} | Val: {len(val_dataset)}")
 
     # Setup Training
-    # Loss
+    # Loss (Paper Eq. 11: L_total = L_class + λ * L_prompt)
     criterion = CombinedStage3Loss(
-        lambda_quality=LAMBDA_QUALITY,
-        lambda_recon=LAMBDA_RECON,
-        lambda_tv=LAMBDA_TV,
-        lambda_infonce=LAMBDA_INFONCE,
-        temperature=TEMPERATURE,
-        use_event_weighting=USE_EVENT_WEIGHTING
+        lambda_prompt=LAMBDA_PROMPT,
+        temperature=TEMPERATURE
     )
 
     # Optimizer (only SNN parameters)
@@ -151,6 +150,7 @@ def main():
         for batch_idx, (voxels, gt_images, labels) in enumerate(train_loader):
             voxels = voxels.to(DEVICE)
             gt_images = gt_images.to(DEVICE)
+            labels = labels.to(DEVICE)
 
             # Forward through SNN
             snn_output = snn_model(voxels, num_steps=NUM_STEPS)
@@ -161,18 +161,25 @@ def main():
             snn_norm = (snn_rgb - clip_mean) / clip_std
 
             # Get CLIP image features
-            # NOTE: No no_grad() here - we need gradients to flow back to SNN through quality loss
+            # NOTE: No no_grad() here - we need gradients to flow back to SNN
             # CLIP encoder is frozen, so only SNN will receive gradients
             image_features = clip_model.encode_image(snn_norm)
             image_features = image_features / image_features.norm(dim=-1, keepdim=True)
 
-            # Compute loss
+            # Generate class text features for this batch (Paper Eq. 10)
+            # Use template "a photo of a {class_name}" for each label
+            texts = [f"a photo of a {class_names[label.item()]}" for label in labels]
+            text_tokens = clip.tokenize(texts).to(DEVICE)
+            with torch.no_grad():
+                text_features_class = clip_model.encode_text(text_tokens)
+                text_features_class = text_features_class / text_features_class.norm(dim=-1, keepdim=True)
+
+            # Compute loss (Paper Eq. 11: L_total = L_class + λ * L_prompt)
             loss, loss_dict = criterion(
-                snn_output, gt_images,
                 image_features.float(),
                 text_features_hq,
                 text_features_lq,
-                event_voxel=voxels  # Pass voxels for event-aware weighting
+                text_features_class.float()
             )
 
             # Backward
@@ -189,8 +196,8 @@ def main():
             # Print progress
             if (batch_idx + 1) % 50 == 0:
                 print(f"Epoch [{epoch+1}/{NUM_EPOCHS}] Batch [{batch_idx+1}/{len(train_loader)}] "
-                      f"Loss: {loss.item():.4f} (Q:{loss_dict['quality']:.3f} R:{loss_dict['recon']:.3f} "
-                      f"TV:{loss_dict.get('tv', 0):.3f}) PSNR: {batch_psnr:.2f}")
+                      f"Loss: {loss.item():.4f} (Class:{loss_dict['class']:.3f} Prompt:{loss_dict['prompt']:.3f}) "
+                      f"PSNR: {batch_psnr:.2f}")
 
         avg_train_loss = epoch_loss / len(train_loader)
         avg_train_psnr = epoch_psnr / len(train_loader)

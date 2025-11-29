@@ -20,19 +20,10 @@ BETA = 0.95
 NUM_STEPS = 50
 N_CTX = 4
 
-# Stage 3 Loss Settings
-# Weight for quality loss (push toward HQ) - reduced to prevent over-smoothing
-# Weight for reconstruction loss (preserve content) - increased to preserve details
-# Weight for TV loss (smoothness, reduce artifacts)
-# Weight for original InfoNCE loss (semantic alignment)
-LAMBDA_QUALITY = 0.3
-LAMBDA_RECON = 1.5
-LAMBDA_TV = 0.4
-LAMBDA_INFONCE = 0.5
-
-# Event-aware weighting: weight reconstruction loss by event density
-# Higher weight where events occur (edges/motion), lower in static regions
-USE_EVENT_WEIGHTING = True
+# Stage 3 Loss Settings (following paper Eq. 11)
+# L_total = L_class + λ * L_prompt
+# Weight for prompt loss (quality guidance) - paper uses λ = 100
+LAMBDA_PROMPT = 100.0
 
 # Training Settings
 # Smaller batch for fine-tuning
