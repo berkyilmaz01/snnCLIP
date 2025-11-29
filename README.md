@@ -1,6 +1,6 @@
 # SpikeCLIP: Event-Based Image Reconstruction with CLIP Guidance
 
-Implementation of **SpikeCLIP: Event-Based Image Reconstruction via Spiking Neural Networks with CLIP Guidance** (arXiv:2501.04477).
+Implementation of **SNN-CLIP: Event-Based Image Reconstruction via Spiking Neural Networks with CLIP Guidance** (arXiv:2501.04477).
 
 <img width="2985" height="1431" alt="stage1_vs_stage3_comparison" src="https://github.com/user-attachments/assets/dad96311-1639-46e3-b1f4-c086c3a2ac39" />
 
