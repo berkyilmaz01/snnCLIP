@@ -158,9 +158,10 @@ def main():
             snn_norm = (snn_rgb - clip_mean) / clip_std
 
             # Get CLIP image features
-            with torch.no_grad():
-                image_features = clip_model.encode_image(snn_norm)
-                image_features = image_features / image_features.norm(dim=-1, keepdim=True)
+            # NOTE: No no_grad() here - we need gradients to flow back to SNN through quality loss
+            # CLIP encoder is frozen, so only SNN will receive gradients
+            image_features = clip_model.encode_image(snn_norm)
+            image_features = image_features / image_features.norm(dim=-1, keepdim=True)
 
             # Compute loss
             loss, loss_dict = criterion(

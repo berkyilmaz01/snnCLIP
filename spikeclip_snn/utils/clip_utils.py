@@ -75,11 +75,13 @@ def calculate_psnr(pred, target):
     """
     Calculate Peak Signal-to-Noise Ratio
 
-    :param pred: Predicted image tenso
+    :param pred: Predicted image tensor
     :param target: Ground truth image tensor
     :return: PSNR value in dB
     """
     mse = F.mse_loss(pred, target)
     if mse == 0:
         return float('inf')
-    return 20 * torch.log10(torch.tensor(1.0)) - 10 * torch.log10(mse)
+    # PSNR = 20 * log10(MAX) - 10 * log10(MSE)
+    # For normalized images (MAX=1.0), this simplifies to -10 * log10(MSE)
+    return -10 * torch.log10(mse)
